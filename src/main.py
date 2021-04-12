@@ -32,8 +32,9 @@ running = True
 pops = pygame.sprite.Group()
 verboseMode = "-v" in sys.argv
 t = 1
-phenotype = ['a', 'A']
 maxGen = 0
+phenotypes = {'a':[], 'A':[]}
+q = p = 0
 
 def verbose(msg):
     if verboseMode:
@@ -52,54 +53,49 @@ class Pop(pygame.sprite.Sprite):
     def __init__(self, position, Color=None, parents=None):
         global pops
         global running
-        global phenotype
+        global phenotypes
         global maxGen
         super(Pop, self).__init__()
-        self.surf = pygame.Surface((25, 25))
-        self.gender = "-m" if random.randint(0,1) else "-f"
         self.alive = True
+        if parents is not None:    
+            self.gtype = parents[0].gtype[random.randint(0,1)]+parents[1].gtype[random.randint(0,1)]
+            self.gen = parents[0].gen + 1
+            if self.gen >= maxGen:
+                verbose(f">Cannot exceed F{maxGen}!")
+                self.alive = False
+                return
+        else:
+            self.gtype = list(phenotypes.keys())[random.randint(0,1)]*2
+            self.gen = 0
+        self.surf = pygame.Surface((25,25))
+        self.gender = "-m" if random.randint(0,1) else "-f"
+        self.clr = tuple(map(lambda x,y : (x+y)/2, parents[0].clr, parents[1].clr)) if Color is None else Color
+        self.horny = False
+        self.pregnant = False
+        self.surf.fill(self.clr)
         self.Id = 10000000
         while findPop(self.Id):
             self.Id = random.randint(10000000, 99999999)
         self.pos = position
         verbose(f">{self.Id}: Position is now {self.pos}")
-        if parents is not None:    
-            self.gtype = parents[0].gtype[random.randint(0,1)]+parents[1].gtype[random.randint(0,1)]
-            self.gen = parents[0].gen + 1
-            if self.gen == maxGen:
-                verbose(f">{i.ID} cannot exceed F{maxGen}!")
-                del self
-        else:
-            self.gtype = phenotype[random.randint(0,1)]*2
-            self.gen = 0
-        self.clr = tuple(map(lambda x,y : (x+y)/2, parents[0].clr, parents[1].clr)) if Color is None else Color
-        self.horny = False
-        self.pregnant = False
-        self.t_t = 0
-        self.surf.fill(self.clr)
         pops.add(self)
         verbose(f">{self.Id}: Added self to pops list")
-        _thread.start_new_thread(self.updateSprite, ())
         _thread.start_new_thread(self.move, ())
         _thread.start_new_thread(self.mate, ())
         _thread.start_new_thread(self.age, ())
     def age(self):
+        global t
         while running and self.alive:
-            sleep(t)
-            self.t_t += 1
-    def updateSprite(self):
-        global running
-        while running and self.alive:
-            self.surf.fill(self.clr)
+            sleep(t*100)
     def move(self):
         global t
         global running
         movement = lambda Pos : Pos+(random.choice([-1,1])*random.choice([0,5,10,25,50]))
         while running and self.alive:
-            sleep(0.5*t)
+            sleep(0.125*t)
             self.cachePos = self.pos
             self.pos = (0,0)
-            while not ((self.pos[0] > (SCREEN_W-WIN)/2 and self.pos[0] < (SCREEN_W/2)+(WIN/2)) and (self.pos[1] > (SCREEN_H-WIN)/2 and self.pos[1] < (SCREEN_H/2)+(WIN/2))):
+            while not ((self.pos[0] > ((SCREEN_W-WIN)/2)-(WIN/4) and self.pos[0] < (SCREEN_W/2)+(WIN/4)) and (self.pos[1] > (SCREEN_H-WIN)/2 and self.pos[1] < (SCREEN_H/2)+(WIN/2))):
                 self.pos = (movement(self.cachePos[0]), movement(self.cachePos[1]))
             verbose(f">{self.Id}: Position is now {self.pos}")
     def pregnate(self, father):
@@ -107,7 +103,7 @@ class Pop(pygame.sprite.Sprite):
         global running
         if self.alive and running: # Necrophilia is not allowed
             self.pregnant = True
-            sleep(t*10)
+            sleep(t*2)
             Pop(self.pos, Color=None, parents=[self, father])
             self.pregnant = False
     def mate(self):
@@ -119,7 +115,7 @@ class Pop(pygame.sprite.Sprite):
             if self.gen+1 <= maxGen:
                 continue
             else:
-                sleep(t*5)
+                sleep(t*11)
             self.horny = True
             verbose(f">{self.Id}: I am horny!")
             for i in pops:
@@ -146,14 +142,14 @@ def sab(cin, t, msg):
         print(f">{msg}: {t}")
     else:
         try:
-            if cin[1] == "set":
+            if cin[1] == "set" or cin[1] == '=':
                 t = int(cin[2])
-            elif cin[1] == "add":
+            elif cin[1] == "add" or cin[1] == '+':
                 t += int(cin[2])
-            elif cin[1] == "sub":
+            elif cin[1] == "sub" or cin[1] == '-':
                 t -= int(cin[2])
             else:
-                error("Unknown option (valid options are set, add, sub)")
+                error("Unknown option [valid options are set(=),add(+),sub(-)]")
         except ValueError:
             error("Expected type `int`")
     return t
@@ -215,7 +211,7 @@ def consoleTwo(cin):
         except (IndexError, ValueError): #TODO: Add multiple species and move IndexError to its own except
             pass
         for i in range(j):
-            pops.add(Pop((random.randint((SCREEN_W-WIN)/2, (SCREEN_W/2)+(WIN/2)), random.randint((SCREEN_H-WIN)/2, (SCREEN_H/2)+(WIN/2))), (0,0,255) if len(Color) != 3 else Color))
+            pops.add(Pop((random.randint(((SCREEN_W-WIN)/2)-(WIN/4), (SCREEN_W/2)+(WIN/4)), random.randint((SCREEN_H-WIN)/2, (SCREEN_H/2)+(WIN/2))), (0,0,255) if len(Color) != 3 else Color))
     elif cin[0] == "exit":
         running = False
     elif cin[0] == "ls":
@@ -227,7 +223,13 @@ def consoleTwo(cin):
         t = sab(cin, t, "TICK SPEED")
     elif cin[0] == "maxgen":
         global maxGen
-        maxGen = sab(cin, t, "MAX GENERATION")
+        maxGen = sab(cin, maxGen, "MAX GENERATION")
+    elif cin[0] == 'p':
+        global p
+        p = sab(cin, p, 'p')
+    elif cin[0] == 'q':
+        global q
+        q = sab(cin, q, 'q')
     elif ' '.join(cin).strip() == "coconut mall":
         print(">You got coconut malled! Share this with your friends to totally coconut mall them!")
         running = False
@@ -244,6 +246,7 @@ while running:
     pygame.draw.rect(screen, color['w'], [((SCREEN_W-WIN)/2)-(WIN/4),(SCREEN_H-WIN)/2,WIN,WIN])
     pygame.draw.rect(screen, color["gy"], [(SCREEN_W/2)+(WIN/2)+(WIN/10),(SCREEN_H-WIN_2Y)/2,WIN_2X,WIN_2Y])
     for pop in pops:
+        pop.surf.fill(pop.clr)
         screen.blit(pop.surf, pop.pos)
     pygame.display.flip()
 
