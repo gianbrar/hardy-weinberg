@@ -17,12 +17,16 @@ from pygame.locals import (
 
 
 pygame.init()
+font = pygame.font.Font("freesansbold.ttf", 32)
+pygame.display.set_caption("E-VOLVE Sim")
 popCount = popCount_t = 0
-SCREEN_W = 1000
-SCREEN_H = 800
+SCREEN_W = 1200
+SCREEN_H = 900
 WIN = 500 # window size
-color = {"black":(0,0,0), "white":(255,255,255), "red":(255,0,0), "green":(0,255,0), "blue":(0,0,255), "pink":(255,0,255), "yellow":(255,255,0), "cyan":(0,255,255),
-         "bk":(0,0,0), 'w':(255,255,255), 'r':(255,0,0), 'g':(0,255,0), 'b':(0,0,255), 'p':(255,0,255), 'y':(255,255,0), 'c':(0,255,255)}
+WIN_2X = WIN/2
+WIN_2Y = WIN*1.5
+color = {"black":(0,0,0), "gray":(170,170,170), "white":(255,255,255), "red":(255,0,0), "green":(0,255,0), "blue":(0,0,255), "pink":(255,0,255), "yellow":(255,255,0), "cyan":(0,255,255),
+         "bk":(0,0,0), "gy":(170,170,170), 'w':(255,255,255), 'r':(255,0,0), 'g':(0,255,0), 'b':(0,0,255), 'p':(255,0,255), 'y':(255,255,0), 'c':(0,255,255)}
 screen = pygame.display.set_mode((SCREEN_W, SCREEN_H))
 running = True
 pops = pygame.sprite.Group()
@@ -49,6 +53,7 @@ class Pop(pygame.sprite.Sprite):
         global pops
         global running
         global phenotype
+        global maxGen
         super(Pop, self).__init__()
         self.surf = pygame.Surface((25, 25))
         self.gender = "-m" if random.randint(0,1) else "-f"
@@ -61,8 +66,8 @@ class Pop(pygame.sprite.Sprite):
         if parents is not None:    
             self.gtype = parents[0].gtype[random.randint(0,1)]+parents[1].gtype[random.randint(0,1)]
             self.gen = parents[0].gen + 1
-            if self.gen == 4:
-                verbose(">{i.ID} cannot exceed F4!")
+            if self.gen == maxGen:
+                verbose(f">{i.ID} cannot exceed F{maxGen}!")
                 del self
         else:
             self.gtype = phenotype[random.randint(0,1)]*2
@@ -221,14 +226,11 @@ def consoleTwo(cin):
         global t
         t = sab(cin, t, "TICK SPEED")
     elif cin[0] == "maxgen":
-        global gen
-        gen = sab(cin, t, "MAX GENERATION")
-    elif cin[0] == "coconut" and cin[1] == "mall":
+        global maxGen
+        maxGen = sab(cin, t, "MAX GENERATION")
+    elif ' '.join(cin).strip() == "coconut mall":
         print(">You got coconut malled! Share this with your friends to totally coconut mall them!")
         running = False
-    elif cin[0] == "za" and cin[1] == "warudo":
-        print(">とき を とまれ !!!")
-        t = 429496729
     else:
         error("Unknown command")
 
@@ -239,7 +241,8 @@ while running:
         if event.type == pygame.QUIT:
             running = False
     screen.fill(color["bk"])
-    pygame.draw.rect(screen, color['w'], [(SCREEN_W-WIN)/2,(SCREEN_H-WIN)/2,WIN,WIN])
+    pygame.draw.rect(screen, color['w'], [((SCREEN_W-WIN)/2)-(WIN/4),(SCREEN_H-WIN)/2,WIN,WIN])
+    pygame.draw.rect(screen, color["gy"], [(SCREEN_W/2)+(WIN/2)+(WIN/10),(SCREEN_H-WIN_2Y)/2,WIN_2X,WIN_2Y])
     for pop in pops:
         screen.blit(pop.surf, pop.pos)
     pygame.display.flip()
