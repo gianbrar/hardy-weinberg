@@ -35,9 +35,9 @@ pops = pygame.sprite.Group()
 verboseMode = "-v" in sys.argv
 t = 1
 maxGen = 0
-phenotypes = {'a':[], 'A':[]}
+phenotypes = {'a':[], 'A':[], 'm':[]}
 q = p = 0
-dominantP = recessiveP = -1
+dominantP = recessiveP = mutantP = -1
 genlist = []
 noSelection = True
 noMutation = True
@@ -74,10 +74,15 @@ class Pop(pygame.sprite.Sprite):
             self.gtype = list(phenotypes.keys())[random.randint(0,1)]*2
             self.gen = 0
         genlist.append(self.gen)
+        if not noMutation and not random.randint(0,3):
+            self.gtype = self.gtype[0]+'m'
+            verbose(">{self.Id} is a mutant")
         self.surf = pygame.Surface((25,25))
         self.gender = "-m" if random.randint(0,1) else "-f"
         if 'A' in self.gtype: 
             self.clr = dominantP
+        elif 'm' in self.gtype:
+            self.clr = mutantP
         else:
             self.clr = recessiveP
         if self.clr == -1: self.clr = tuple(map(lambda x,y : (x+y)/2, parents[0].clr, parents[1].clr)) if Color is None else Color
@@ -100,6 +105,11 @@ class Pop(pygame.sprite.Sprite):
             sleep(t*30)
         self.alive = False
         pops.remove(self)
+        for i in self.gtype:
+            try:
+                phenotypes[i].remove(self.Id)
+            except ValueError:
+                continue
     def move(self):
         global t
         global running
@@ -111,12 +121,18 @@ class Pop(pygame.sprite.Sprite):
             while not ((self.pos[0] > ((SCREEN_W-WIN)/2)-(WIN/4) and self.pos[0] < (SCREEN_W/2)+(WIN/4)) and (self.pos[1] > (SCREEN_H-WIN)/2 and self.pos[1] < (SCREEN_H/2)+(WIN/2))):
                 self.pos = (movement(self.cachePos[0]), movement(self.cachePos[1]))
             verbose(f">{self.Id}: Position is now {self.pos}")
-            if not random.randint(0,19):
-                verbose(f"{self.Id}: Encountered an enemy")
-                if 'A' in self.gtype:
-                    if random.randint(1,100) > (80 if 'A' in self.gtype else 25):
-                        self.alive = False
-
+            if not random.randint(0,19) and not noSelection:
+                self.enemySurf = pygame.Surface((25,25))
+                self.enemySurf.fill(color['p'])
+                screen.blit(self.enemySurf, (self.pos[0]+5, self.pos[1]+5))
+                verbose(f">{self.Id}: Encountered an enemy")
+                sleep(t)
+                if random.randint(1,100) > (99 if 'A' in self.gtype else 5):
+                    self.alive = False
+                    verbose(f">{self.Id}: Lost to enemy")
+                else:
+                    verbose(f">{self.Id} Won against enemy")
+                    del self.enemySurf
     def pregnate(self, father):
         global t
         global running
@@ -239,8 +255,13 @@ def consoleTwo(cin):
             dominantP = colorize(cin[2])
         elif cin[1] == "rec":
             recessiveP = colorize(cin[2])
+        elif cin[1] == "mut":
+            global noMutation
+            global mutantP
+            mutantP = colorize(cin[2])
+            noMutation = False
         else:
-            error("Second arg must be 'dom' or 'rec'")
+            error("Second arg must be 'dom', 'mut', or 'rec'")
     elif cin[0] == "spawn":
         Color = ()
         if "-c" in cin:
@@ -311,8 +332,8 @@ while running:
         if (pop.Id not in phenotypes['a']) and (pop.Id not in phenotypes['A']):
             for i in pop.gtype: phenotypes[i].append(pop.Id)
     try:
-        p = len(phenotypes['a'])/(len(phenotypes['a'])+len(phenotypes['A']))
-        q = len(phenotypes['A'])/(len(phenotypes['a'])+len(phenotypes['A']))
+        p = len(phenotypes['a'])/(len(phenotypes['a'])+len(phenotypes['A'])+len(phenotypes['m']))
+        q = len(phenotypes['A'])/(len(phenotypes['a'])+len(phenotypes['A'])+len(phenotypes['m']))
     except ZeroDivisionError:
         p = q = 0.0
     ptxt = font.render(f">>>p = {p}", None, color['g'])
