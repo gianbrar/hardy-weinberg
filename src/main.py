@@ -87,7 +87,7 @@ class Pop(pygame.sprite.Sprite):
         else:
             self.clr = recessiveP
         if self.clr == -1: self.clr = tuple(map(lambda x,y : (x+y)/2, parents[0].clr, parents[1].clr)) if Color is None else Color
-        self.horny = False
+        self.attracted = False
         self.pregnant = False
         self.surf.fill(self.clr)
         self.Id = 10000000
@@ -151,10 +151,10 @@ class Pop(pygame.sprite.Sprite):
             if self.gen+1 > maxGen:
                 continue
             sleep(t*11)
-            self.horny = True
-            verbose(f">{self.Id}: I am horny!")
+            self.attracted = True
+            verbose(f">{self.Id}: Prepared to mate")
             for i in pops:
-                if i.gender != self.gender and i.horny and self.gen == i.gen: # my game has to be homophobic, sorry :\ ; at least I'm preventing pedophilia *and* nonconsensual relationships!
+                if i.gender != self.gender and i.attracted and self.gen == i.gen: # my game has to be homophobic, sorry :\ ; at least I'm preventing pedophilia *and* nonconsensual relationships!
                     self.pos = i.pos
                     if not randomMate and 'm' not in i.gtype:
                         continue
