@@ -36,9 +36,10 @@ verboseMode = "-v" in sys.argv
 t = 1
 maxGen = 0
 phenotypes = {'a':[], 'A':[], 'm':[]}
-q = p = 0
+q = p = r = 0 
 dominantP = recessiveP = mutantP = -1
 genlist = []
+randomMate = True
 noSelection = True
 noMutation = True
 
@@ -127,7 +128,7 @@ class Pop(pygame.sprite.Sprite):
                 screen.blit(self.enemySurf, (self.pos[0]+5, self.pos[1]+5))
                 verbose(f">{self.Id}: Encountered an enemy")
                 sleep(t)
-                if random.randint(1,100) > (99 if 'A' in self.gtype else 5):
+                if random.randint(1,100) > (80 if 'A' in self.gtype else 50):
                     self.alive = False
                     verbose(f">{self.Id}: Lost to enemy")
                 else:
@@ -155,6 +156,8 @@ class Pop(pygame.sprite.Sprite):
             for i in pops:
                 if i.gender != self.gender and i.horny and self.gen == i.gen: # my game has to be homophobic, sorry :\ ; at least I'm preventing pedophilia *and* nonconsensual relationships!
                     self.pos = i.pos
+                    if not randomMate and 'm' not in i.gtype:
+                        continue
                     if self.gender == "-m" and not i.pregnant:
                         _thread.start_new_thread(i.pregnate, (self,))
 def colorize(Color):
@@ -262,6 +265,9 @@ def consoleTwo(cin):
             noMutation = False
         else:
             error("Second arg must be 'dom', 'mut', or 'rec'")
+    elif cin[0] == "smate":
+        global randomMate
+        randomMate = False
     elif cin[0] == "spawn":
         Color = ()
         if "-c" in cin:
@@ -332,10 +338,11 @@ while running:
         if (pop.Id not in phenotypes['a']) and (pop.Id not in phenotypes['A']):
             for i in pop.gtype: phenotypes[i].append(pop.Id)
     try:
-        p = len(phenotypes['a'])/(len(phenotypes['a'])+len(phenotypes['A'])+len(phenotypes['m']))
-        q = len(phenotypes['A'])/(len(phenotypes['a'])+len(phenotypes['A'])+len(phenotypes['m']))
+        q = len(phenotypes['a'])/(len(phenotypes['a'])+len(phenotypes['A'])+len(phenotypes['m']))
+        p = len(phenotypes['A'])/(len(phenotypes['a'])+len(phenotypes['A'])+len(phenotypes['m']))
+        r = len(phenotypes['m'])/(len(phenotypes['a'])+len(phenotypes['A'])+len(phenotypes['m']))
     except ZeroDivisionError:
-        p = q = 0.0
+        p = q = r = 0
     ptxt = font.render(f">>>p = {p}", None, color['g'])
     qtxt = font.render(f">>>q = {q}", None, color['g'])
     qsq = font.render(f">>>q² = {q*q}", None, color['g'])
@@ -349,17 +356,20 @@ while running:
     screen.blit(qsq, (sidebar[0],sidebar[1]+135))
     screen.blit(psq, (sidebar[0],sidebar[1]+165))
     screen.blit(tpq, (sidebar[0],sidebar[1]+195))
-    screen.blit(equilibrium, (sidebar[0],sidebar[1]+225))
-    screen.blit(font.render(f">>>NO SELECTION == {noSelection}",None,color['g']),(sidebar[0],sidebar[1]+255))
-    screen.blit(font.render(f">>>NO MUTATION == {noMutation}",None,color['g']),(sidebar[0],sidebar[1]+285))
-    screen.blit(font.render(f">>>NO MIGRATION == True",None,color['g']),(sidebar[0],sidebar[1]+315))
-    screen.blit(font.render(f">>>LARGE POPULATION = {len(pops) >= 5}",None,color['g']),(sidebar[0],sidebar[1]+345))
-    screen.blit(font.render(f">>>RANDOM MATING = True",None,color['g']),(sidebar[0],sidebar[1]+375))
+    screen.blit(font.render(f">>>p + q = {p+q}",None,color['g']),(sidebar[0],sidebar[1]+225))
+    screen.blit(equilibrium, (sidebar[0],sidebar[1]+255))
+    screen.blit(font.render(f">>>p² + q² + r² + 2pq + 2pr + 2qr = {hwe() + r*r + 2*p*r + 2*q*r}",None,color['g']),(sidebar[0],sidebar[1]+285))
+    screen.blit(font.render(f">>>NO SELECTION == {noSelection}",None,color['g']),(sidebar[0],sidebar[1]+315))
+    screen.blit(font.render(f">>>NO MUTATION == {noMutation}",None,color['g']),(sidebar[0],sidebar[1]+345))
+    screen.blit(font.render(f">>>NO MIGRATION == True",None,color['g']),(sidebar[0],sidebar[1]+375))
+    screen.blit(font.render(f">>>LARGE POPULATION = {len(pops) >= 5}",None,color['g']),(sidebar[0],sidebar[1]+405))
+    screen.blit(font.render(f">>>RANDOM MATING = {randomMate}",None,color['g']),(sidebar[0],sidebar[1]+435))
     try:
         genaverage = sum(genlist)/len(genlist)
     except ZeroDivisionError:
         genaverage = 0
-    screen.blit(font.render(f">>>GENERATION AVERAGE: {genaverage}",None,color['g']),(sidebar[0],sidebar[1]+405))
+    screen.blit(font.render(f">>>GENERATION AVERAGE: {genaverage}",None,color['g']),(sidebar[0],sidebar[1]+465))
+    screen.blit(font.render(f">>>p = {p}", None, color['g']),(sidebar[0],sidebar[1]+495))
     pygame.display.flip()
 
 pygame.quit()
