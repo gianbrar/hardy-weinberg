@@ -299,7 +299,7 @@ def consoleTwo(cin):
         t = sab(cin, t, "TICK SPEED")
     elif cin[0] == "maxgen":
         global maxGen
-        maxGen = sab(cin, maxGen, "MAX GENERATION")
+        maxGen = sab(cin, maxGen, "MAX GENERATION") + 1
     elif cin[0] == 'p':
         global p
         p = sab(cin, p, 'p')
@@ -369,7 +369,7 @@ while running:
     except ZeroDivisionError:
         genaverage = 0
     screen.blit(font.render(f">>>GENERATION AVERAGE: {genaverage}",None,color['g']),(sidebar[0],sidebar[1]+465))
-    screen.blit(font.render(f">>>p = {p}", None, color['g']),(sidebar[0],sidebar[1]+495))
+    screen.blit(font.render(f">>>r = {r}", None, color['g']),(sidebar[0],sidebar[1]+495))
     pygame.display.flip()
 
 pygame.quit()
