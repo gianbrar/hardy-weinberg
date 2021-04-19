@@ -51,6 +51,12 @@ W/OUT ANY: No pops are painted.
 Binary operation that concatenates two [2x] commands x and y into one [1x] line.
 IE: spawn 50 && paint -f pink && clear
 
+### ls
+List data about all pops
+
+### clear
+Clears the terminal screen.
+
 ### VARIABLE BASED
 ### Varlist:
 p (Frequency of dominant alleles) [WARNING: UNTESTED; UNLIKELY TO FUNCTION AS INTENDED]
@@ -69,6 +75,3 @@ The value of x is subtracted from y
 
 #### x [add] || [+] y
 The value of y is added to x
-
-### clear
-Clears the terminal screen.
