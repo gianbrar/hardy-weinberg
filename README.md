@@ -1,4 +1,4 @@
-# E-VOLVE Sim
+# E-VOLVE Sim (ALPHA)
 E-volve is a project initially created for my MP3 quarterly for Biology. It aims to act as a tool for accurately simulating the evolution of a population over time.
 
 
