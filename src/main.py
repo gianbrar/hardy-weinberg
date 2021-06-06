@@ -119,7 +119,7 @@ class Pop(pygame.sprite.Sprite):
             sleep(0.125*t)
             self.cachePos = self.pos
             self.pos = (0,0)
-            while not ((self.pos[0] > ((SCREEN_W-WIN)/2)-(WIN/4) and self.pos[0] < (SCREEN_W/2)+(WIN/4)) and (self.pos[1] > (SCREEN_H-WIN)/2 and self.pos[1] < (SCREEN_H/2)+(WIN/2))):
+            while not ((self.pos[0] > ((SCREEN_W-WIN)/2)-(WIN/4) and self.pos[0] < (SCREEN_W/2)+(WIN/4)) and self.pos[1] > (SCREEN_H-WIN)/2 and self.pos[1] < (SCREEN_H/2)+(WIN/2)):
                 self.pos = (movement(self.cachePos[0]), movement(self.cachePos[1]))
             verbose(f">{self.Id}: Position is now {self.pos}")
             if not random.randint(0,19) and not noSelection:
@@ -161,16 +161,16 @@ class Pop(pygame.sprite.Sprite):
                     if self.gender == "-m" and not i.pregnant:
                         _thread.start_new_thread(i.pregnate, (self,))
 def colorize(Color):
-    for i in Color:
+    try:
+        int(Color[0])
+    except ValueError:
         try:
-            int(i)
-        except ValueError:
-            try:
-                Color = color[Color[0]]
-            except KeyError:
-                error("Unknown color")
-                return -1
-        return Color
+            Color = color[Color[0]]
+        except KeyError:
+            error("Unknown color")
+            return -1
+    Color = tuple(map(int, Color))
+    return Color
 
 hwe = lambda : p**2 + 2*p*q + q**2
 
